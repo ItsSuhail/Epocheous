@@ -325,8 +325,18 @@
 
         // Entering Identity Tag
         window.enterSystem = async () => {
-            const input = document.getElementById('identity-input').value;
-            if (!input) return;
+            const inputfield = document.getElementById('identity-input');
+            const input = inputfield.value;
+            if (!input){
+                inputfield.classList.add('invalid');
+                inputfield.parentElement.classList.add('shake');
+                setTimeout(() => {
+                    inputfield.classList.remove('invalid');
+                    inputfield.parentElement.classList.remove('shake');
+                }, 500);
+                return;
+                
+            }
             
             // Generate Tripcode
             const msgBuffer = new TextEncoder().encode(input);
