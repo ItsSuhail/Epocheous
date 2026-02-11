@@ -212,6 +212,31 @@
         text-align: left;
     }
 
+    /* CREATOR */
+    #creator-tag {
+        position: absolute;
+        bottom: 20px;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        letter-spacing: 2px;
+        text-align: center;
+        width: 100%;
+        pointer-events: auto; /* Ensures the link is clickable */
+    }
+
+    #creator-tag a {
+        color: var(--text-primary);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: 0.3s;
+    }
+
+    #creator-tag a:hover {
+        color: var(--accent);
+        border-bottom: 1px solid var(--accent);
+        text-shadow: 0 0 8px var(--accent-glow);
+    }
+
     /* MOBILE RESPONSIVE */
     @media (max-width: 600px) {
         body { margin: 5px; padding: 5px; }
@@ -254,6 +279,10 @@
             <input type="text" id="message-input" placeholder="ENTER MESSAGE..." onkeypress="handleMsgEnter(event)" style="margin-bottom: 0;">
             <button onclick="sendMessage()">TRANSMIT</button>
         </div>
+    </div>
+
+    <div id="creator-tag" class="fade-in">
+        <p>Made by: <a href="https://github.com/ItsSuhail" target="_blank">Suhail</a></p>
     </div>
 
     <script type="module">
@@ -385,6 +414,7 @@
             document.getElementById('current-room-display').innerText = `EPOCH: ${currentRoomDate}`;
             document.getElementById('my-hash-display').innerText = `ID: [${currentUserHash}]`;
             document.getElementById('messages-container').innerHTML = '';
+            document.getElementById('creator-tag').classList.add('hidden');
 
             switchScreen('date-screen', 'chat-screen');
 
@@ -428,6 +458,7 @@
             switchScreen('chat-screen', 'date-screen');
             document.getElementById('date-input').value = '';
             document.getElementById('date-input').focus();
+            document.getElementById('creator-tag').classList.remove('hidden');
             currentRoomDate = null;
         };
 
