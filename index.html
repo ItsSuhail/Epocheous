@@ -260,7 +260,7 @@
         // Firebase Configuration 
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, off } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, off, set, onDisconnect, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
         
         const firebaseConfig = {
@@ -283,6 +283,8 @@
         let currentUserHash = null;
         let currentRoomDate = null;
         let activeListener = null;
+        let myPresenceRef = null;
+        let presenceListener = null;
 
         // Utils
         const switchScreen = (fromId, toId) => {
@@ -386,6 +388,25 @@
 
             switchScreen('date-screen', 'chat-screen');
 
+            // The Dead Man's Switch
+            const roomPresenceRef = ref(db, `epocheous/presence/${currentRoomDate}`);
+            
+            // Create a unique spot for THIS specific connection
+            myPresenceRef = push(roomPresenceRef); 
+            
+            // Tell server to delete this spot if the connection drops
+            onDisconnect(myPresenceRef).remove().then(() => {
+                // Once the server confirms it has the instructions, we mark ourselves as online
+                set(myPresenceRef, currentUserHash);
+            });
+
+            presenceListener = onValue(roomPresenceRef, (snapshot) => {
+                const count = snapshot.size;
+                
+                const display = document.getElementById('current-room-display');
+                display.innerText = `EPOCH: ${currentRoomDate} [ONLINE: ${count}]`;
+            });
+
             // Firebase Listen
             const chatRef = ref(db, `epocheous/${currentRoomDate}`);
             activeListener = onChildAdded(chatRef, (snapshot) => {
@@ -398,6 +419,11 @@
             if (activeListener && currentRoomDate) {
                 const chatRef = ref(db, `epocheous/${currentRoomDate}`);
                 off(chatRef);
+
+                // Stop listening to presence
+                if (presenceListener) off(ref(db, `epocheous/presence/${currentRoomDate}`));
+                // Trigger removal
+                if (myPresenceRef) set(myPresenceRef, null);
             }
             switchScreen('chat-screen', 'date-screen');
             document.getElementById('date-input').value = '';
