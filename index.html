@@ -515,13 +515,15 @@
 
                 // Stop listening to presence
                 if (presenceListener) off(ref(db, `epocheous/presence/${currentRoomDate}`));
-                
+
                 // Trigger removal
                 if (myPresenceRef) set(myPresenceRef, null);
                 
                 activeListener = null;
                 presenceListener = null;
+                viewListener = null;
             }
+            
             switchScreen('chat-screen', 'date-screen');
             document.getElementById('date-input').value = '';
             document.getElementById('date-input').focus();
