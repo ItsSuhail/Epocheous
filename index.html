@@ -181,6 +181,20 @@
         position: relative;
     }
 
+    .message-footer {
+        margin-top: 5px;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        display: flex;
+        justify-content: flex-end; /* Right align by default */
+        align-items: center;
+        gap: 8px;
+    }
+
+    .message-footer {
+        justify-content: flex-start;
+    }
+
     .message.mine {
         align-self: flex-end;
         border-left: none;
@@ -194,6 +208,31 @@
         color: var(--text-dim);
         margin-bottom: 5px;
         letter-spacing: 1px;
+    }
+
+    .seen-toggle {
+        cursor: pointer;
+        opacity: 0.6;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px; /* Space between Eye and Number */
+        font-weight: bold;
+    }
+
+    .seen-toggle:hover {
+        opacity: 1;
+        color: var(--accent);
+        text-shadow: 0 0 5px var(--accent);
+    }
+    
+    .seen-list {
+        font-size: 0.65rem;
+        color: var(--text-dim);
+        opacity: 0.8;
+        margin-left: 5px;
+        border-left: 1px solid var(--text-dim);
+        padding-left: 5px;
     }
 
     .identity-hash { color: var(--accent); }
@@ -290,7 +329,7 @@
         // Firebase Configuration 
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, off, set, onDisconnect, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, off, set, onDisconnect, onValue, update, onChildChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
         
         const firebaseConfig = {
@@ -315,6 +354,7 @@
         let activeListener = null;
         let myPresenceRef = null;
         let presenceListener = null;
+        let viewListener = null;
 
         // Utils
         const switchScreen = (fromId, toId) => {
@@ -450,10 +490,22 @@
 
             // Firebase Listen
             const chatRef = ref(db, `epocheous/${currentRoomDate}`);
+
+            viewListener = onChildChanged(chatRef, (snapshot) => {
+                const data = snapshot.val();
+                const msgId = snapshot.key;
+                
+                const msgDiv = document.getElementById(msgId);
+                if (msgDiv) {
+                    updateMessageFooter(msgDiv, data);
+                }
+            });
+
             activeListener = onChildAdded(chatRef, (snapshot) => {
                 const data = snapshot.val();
-                renderMessage(data);
+                renderMessage(data, snapshot.key);
             });
+
         };
 
         window.leaveRoom = () => {
@@ -463,8 +515,12 @@
 
                 // Stop listening to presence
                 if (presenceListener) off(ref(db, `epocheous/presence/${currentRoomDate}`));
+                
                 // Trigger removal
                 if (myPresenceRef) set(myPresenceRef, null);
+                
+                activeListener = null;
+                presenceListener = null;
             }
             switchScreen('chat-screen', 'date-screen');
             document.getElementById('date-input').value = '';
@@ -493,11 +549,12 @@
             if (e.key === 'Enter' && currentRoomDate !== null) window.sendMessage();
         };
 
-        function renderMessage(data) {
+        function renderMessage(data, messageId) {
             const container = document.getElementById('messages-container');
             const isMine = data.sender === currentUserHash;
-            
+
             const div = document.createElement('div');
+            div.id = messageId
             div.className = `message ${isMine ? 'mine' : ''}`;
             
             const meta = document.createElement('span');
@@ -512,11 +569,43 @@
             const content = document.createElement('div');
             content.textContent = data.text;
             
+            const footer = document.createElement('div');
+            footer.className = 'message-footer';
+
             div.appendChild(meta);
             div.appendChild(content);
+            div.appendChild(footer)
             container.appendChild(div);
+
+            updateMessageFooter(div, data)
+
+            // Mark as seen
+            const seenRef = ref(db, `epocheous/${currentRoomDate}/${messageId}/seenBy`);
+            update(seenRef, { [currentUserHash]: true });
             
+
             container.scrollTop = container.scrollHeight;
+        }
+
+        function updateMessageFooter(msgDiv, data) {
+            const footer = msgDiv.querySelector('.message-footer');
+            if (!footer) return;
+
+            const viewers = data.seenBy ? Object.keys(data.seenBy) : [];
+            const formattedList = viewers.map(hash => {
+                return hash === currentUserHash ? `${hash} (YOU)` : hash;
+            });
+
+            const count = viewers.length;
+            const listStr = formattedList.join(', ');
+
+            // Render: [Eye Icon] [Count] | [Hidden List]
+            footer.innerHTML = `
+                <span class="seen-toggle" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    👁 ${count}
+                </span>
+                <span class="seen-list hidden">${listStr}</span>
+            `;
         }
     </script>
 </body>
