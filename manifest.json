@@ -2,9 +2,9 @@
   "name": "Epocheous",
   "short_name": "Epocheous",
   "start_url": "/index.html",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#050505",
-  "theme_color": "#00ff41",
+  "theme_color": "#050505",
   "orientation": "portrait-primary",
   "icons": [
     {
