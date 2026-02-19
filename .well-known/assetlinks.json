@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.epocheous",
+        "sha256_cert_fingerprints": ["58:14:4B:DF:A3:E0:89:F9:44:6D:F5:E6:B1:0D:16:17:D3:2C:4E:9E:E6:31:87:5F:DC:25:B6:93:89:61:02:B9"]
+      }
+    }]
